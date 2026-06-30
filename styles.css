@@ -1,0 +1,78 @@
+/*
+ * Vencord, a Discord client mod
+ * Copyright (c) 2026 Vendicated and contributors
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+.qcp-quest-item-restyle > div {
+    background-color: var(--qcp-color) !important; /* Overrides Discord's dynamic quest tile background color */
+}
+
+.qcp-quest-item-restyle > :nth-child(2) button > div,
+.qcp-quest-item-restyle > :nth-child(2) button > div > div > span {
+    color: var(--qcp-quest-name);
+}
+
+.qcp-quest-item-restyle > :nth-child(2) button > div > div > svg path {
+    fill: var(--qcp-quest-name);
+}
+
+.qcp-quest-item-restyle > div > div[class*="rewardDescriptionContainer"] {
+    overflow: visible;
+}
+
+.qcp-quest-item-restyle > div > div[class*="rewardDescriptionContainer"] > div[class*="textContainer"] > [class*="eyebrow"] {
+    color: var(--qcp-quest-name) !important; /* Overrides Discord's default card eyebrow label color */
+}
+
+.qcp-quest-item-restyle > div > div[class*="rewardDescriptionContainer"] > div[class*="textContainer"] > div[class*="text-md"],
+.qcp-quest-item-restyle > div > div[class*="rewardDescriptionContainer"] > div[class*="textContainer"] > div[class*="text-md"] > span {
+    color: var(--qcp-reward-title) !important; /* Overrides Discord's default reward card title color */
+}
+
+.qcp-quest-item-restyle > div > div[class*="rewardDescriptionContainer"] > div[class*="textContainer"] > div[class*="text-sm"] {
+    color: var(--qcp-reward-description) !important; /* Overrides Discord's default reward card description text color */
+}
+
+.qcp-quest-item-restyle [class*="placeholderElement"] {
+    background-color: transparent;
+}
+
+.qcp-quest-item-restyle > div[class*="container"] > div[class*="positionContentOverBackground"] > div[class*="contents"] > div[class*="bottomRow"] > div[class*="text-sm"] {
+    color: var(--qcp-reward-description) !important; /* Overrides Discord's default card bottom text color */
+}
+
+.qcp-quest-item-contrast-logo > div[class*="container"] > div[class*="positionContentOverBackground"] > div[class*="contents"] > div[class*="partnerBranding"] > img {
+    filter: drop-shadow(0 0 10px rgb(0 0 0 / 80%));
+}
+
+.qcp-quest-item-default-gradient > :nth-child(1) [class*="overlay"] {
+    background: linear-gradient(to top,
+            var(--qcp-color) 0,
+            hsl(from var(--qcp-color) h s l / 95%) 20.31%,
+            hsl(from var(--qcp-color) h s l / 0%) 100%);
+}
+
+.qcp-quest-item-restyle > :nth-child(2) [class*="textOverflowBlur"] {
+    background: linear-gradient(transparent 50%, var(--qcp-color) 100%);
+    filter: brightness(0.9);
+}
+
+.qcp-quest-item-restyle > :nth-child(2) > div button {
+    background-color: var(--qcp-button-normal) !important; /* Overrides Discord's default button primary theme color */
+}
+
+.qcp-quest-item-restyle > :nth-child(2) > div button:not([disabled]):hover {
+    background-color: var(--qcp-button-hover) !important; /* Overrides Discord's default button hover state color */
+    transition: background-color 0.2s ease-in-out;
+}
+
+.qcp-quest-item-restyle > :nth-child(1) [class*="container"] {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.qcp-quest-item-restyle > :nth-child(2) [class*="container"] {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
