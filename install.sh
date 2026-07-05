@@ -114,10 +114,10 @@ pnpm build
 echo
 echo -e "${BLUE}Closing Discord if running...${NC}"
 if [[ "$OS" == *"MINGW"* || "$OS" == *"MSYS"* || "$OS" == *"CYGWIN"* ]]; then
-    taskkill /F /IM Discord.exe >/dev/null 2>&1 || true
-    taskkill /F /IM DiscordCanary.exe >/dev/null 2>&1 || true
-    taskkill /F /IM DiscordPTB.exe >/dev/null 2>&1 || true
-    taskkill /F /IM DiscordDevelopment.exe >/dev/null 2>&1 || true
+    MSYS_NO_PATHCONV=1 taskkill /F /IM Discord.exe >/dev/null 2>&1 || true
+    MSYS_NO_PATHCONV=1 taskkill /F /IM DiscordCanary.exe >/dev/null 2>&1 || true
+    MSYS_NO_PATHCONV=1 taskkill /F /IM DiscordPTB.exe >/dev/null 2>&1 || true
+    MSYS_NO_PATHCONV=1 taskkill /F /IM DiscordDevelopment.exe >/dev/null 2>&1 || true
 elif [ "$OS" = "Darwin" ]; then
     pkill -x Discord >/dev/null 2>&1 || true
     pkill -x "Discord Canary" >/dev/null 2>&1 || true
