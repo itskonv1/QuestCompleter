@@ -26,7 +26,7 @@ import { settings } from "./settings";
 let orchestrator: QuestOrchestrator | null = null;
 let updateTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
-const GuildlessServerListItemComponent = findComponentByCodeLazy("tooltip:", "lowerBadgeSize:");
+const GuildlessServerListItemComponent = findComponentByCodeLazy("tooltip:", "asContainer:");
 
 function QuestIcon({ height, width, className }: { height: number; width: number; className?: string; }): React.JSX.Element {
     return (
