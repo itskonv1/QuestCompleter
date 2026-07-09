@@ -48,8 +48,14 @@ QuestCompleter Features:
 
 If you do not have Equicord installed yet, this single command handles the entire setup (clones Equicord, sets up this plugin, installs dependencies, builds, and injects):
 
+**Linux / macOS:**
 ```bash
 curl -sSL https://raw.githubusercontent.com/itskonv1/QuestCompleter/main/install.sh | bash
+```
+
+**Windows :**
+```cmd
+powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/itskonv1/QuestCompleter/main/install.ps1 | iex"
 ```
 
 > [!IMPORTANT]
