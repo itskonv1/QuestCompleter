@@ -9,12 +9,7 @@ import { OptionType } from "@utils/types";
 
 export const settings = definePluginSettings({
     autoStart: {
-        description: "Automatically enroll and start unenrolled quests",
-        type: OptionType.BOOLEAN,
-        default: true,
-    },
-    autoClaim: {
-        description: "Automatically claim reward after quest completion",
+        description: "Automatically accept and enroll unenrolled quests",
         type: OptionType.BOOLEAN,
         default: true,
     },

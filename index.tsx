@@ -7,6 +7,7 @@
 import "./styles.css";
 
 import definePlugin from "@utils/types";
+import { findByCodeLazy } from "@webpack";
 import { QuestStore } from "@webpack/common";
 
 import { QuestOrchestrator } from "./completion";
@@ -19,6 +20,8 @@ import {
     injectDesktopVideoQuestTasks
 } from "./helpers";
 import { settings } from "./settings";
+
+const fetchAndDispatchQuests = findByCodeLazy("QUESTS_FETCH_CURRENT_QUESTS_BEGIN") as (() => Promise<void>) | undefined;
 
 let orchestrator: QuestOrchestrator | null = null;
 let updateTimeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -57,12 +60,13 @@ export default definePlugin({
         QUESTS_FETCH_CURRENT_QUESTS_SUCCESS: debouncedUpdate,
         QUESTS_ENROLL_SUCCESS: debouncedUpdate,
         QUESTS_USER_STATUS_UPDATE: debouncedUpdate,
-        QUEST_CLAIM: debouncedUpdate
+        QUESTS_CLAIM_REWARD_SUCCESS: debouncedUpdate
     },
 
     start() {
         orchestrator = new QuestOrchestrator();
         debouncedUpdate();
+        fetchAndDispatchQuests?.();
     },
 
     patches: [

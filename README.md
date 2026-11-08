@@ -5,104 +5,126 @@
 </p>
 
 <p align="center">
-  <img src="https://readme-typing-svg.herokuapp.com/?font=Righteous&size=24&color=888888&center=true&vCenter=true&width=600&height=50&duration=3000&lines=Automate+Discord+Quests+In+The+Background;Accept+New+Quests+Automatically;Claim+Decorations+And+Orbs+Instantly" alt="Typing"/>
-</p>
-
-<p align="center">
   <a href="https://github.com/itskonv1/QuestCompleter/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/License-GPL--3.0-black?style=for-the-badge" alt="License: GPL-3.0">
+    <img src="https://img.shields.io/badge/License-GPL--3.0-blue.svg?style=for-the-badge" alt="License: GPL-3.0">
   </a>
-  <a href="#">
-    <img src="https://img.shields.io/badge/Compatibility-Vencord%20%7C%20Equicord-lightgrey?style=for-the-badge" alt="Compatibility">
-  </a>
+  <img src="https://img.shields.io/badge/Platform-Equicord%20%7C%20Vencord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Compatibility">
+  <img src="https://img.shields.io/badge/Node.js-20+-339933?style=for-the-badge&logo=node.js&logoColor=white" alt="Node.js">
+  <img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
 </p>
 
 <p align="center">
-  <b>A Vencord and Equicord user plugin that handles Discord Quests automatically in the background. No more idling in random games or waiting for video timers.</b>
+  <b>A background automation plugin for Equicord and Vencord that automatically accepts new quests and completes supported tasks without needing to run games or wait out video timers.</b>
 </p>
 
 ---
 
-<h2 align="center">
-  <img src="https://img.icons8.com/?size=100&id=YSWCDCSF4H3N&format=png&color=888888" width="22"> Features
-</h2>
+## Architecture Flow
 
-```text
-QuestCompleter Features:
-• Auto-Enroll   : Accepts new quests as soon as they drop
-• Auto-Claim    : Redeems gift codes, profile decorations, or Orbs instantly
-• Play in BG    : Progresses game/stream quests without keeping games running
-• Skip Timers   : Bypasses playback wait times on video quests
-• IPC Bridge    : Solves achievement-based quests by bypassing renderer CSP limits
-• Mobile Mode   : Watch and complete mobile-only video quests on desktop
-• Toast Alerts  : Keeps you notified whenever a quest updates or completes
+```mermaid
+flowchart LR
+    A[Quests Detected] --> B{Auto-Enroll?}
+    B -- Yes --> C[Enroll in Quest]
+    B -- No --> D[Awaiting User Action]
+    C --> E{Supported Task?}
+    E -- Watch Video --> F[Fast-Forward Playback]
+    E -- Play / Stream --> G[Background Heartbeats]
+    E -- Activity Achievement --> H[Native IPC Proxy]
+    E -- Other / Unsupported --> I[Ready for Manual Play]
+    F --> J[Completion Confirmed]
+    G --> J
+    H --> J
+    J --> K[Claim Reward in Discord UI]
 ```
 
 ---
 
-<h2 align="center">
-  <img src="https://img.icons8.com/?size=100&id=YSWCDCSF4H3N&format=png&color=888888" width="22"> Installation
-</h2>
+## Features
 
-### Method 1: One-Command Setup (Full Equicord & Plugin Installation)
+| Feature | Description | State |
+| :--- | :--- | :---: |
+| **Auto-Enroll** | Automatically accepts and enrolls in all available quests as soon as they drop | Active |
+| **Background Runner** | Simulates gameplay and streaming heartbeats without launching any game executable | Active |
+| **Instant Video Progression** | Skips playback wait times using elapsed enrollment duration | Active |
+| **IPC Bridge** | Solves Discord activity achievement quests by safely bypassing renderer CSP limitations | Active |
+| **Mobile Video Mode** | Dynamically adapts mobile-only video quests to be watchable and completable on desktop | Active |
+| **Toast Notifications** | Delivers clear alerts when quests are enrolled or finished | Active |
+| **Native Claiming** | Leaves reward redemption to Discord's official interface to prevent claim conflicts | Active |
 
-If you do not have Equicord installed yet, this single command handles the entire setup (clones Equicord, sets up this plugin, installs dependencies, builds, and injects):
+---
 
-**Linux / macOS:**
+## Supported Quest Types
+
+| Quest Task Type | Execution Strategy | Auto-Enroll | Auto-Complete |
+| :--- | :--- | :---: | :---: |
+| `WATCH_VIDEO` | Accelerated playback timestamps | Yes | Yes |
+| `WATCH_VIDEO_ON_MOBILE` | Desktop task injection | Yes | Yes |
+| `PLAY_ON_DESKTOP` | Periodic heartbeat dispatches | Yes | Yes |
+| `PLAY_ON_DESKTOP_V2` | Periodic heartbeat dispatches | Yes | Yes |
+| `PLAY_ON_XBOX` | Console heartbeat emulation | Yes | Yes |
+| `PLAY_ON_PLAYSTATION` | Console heartbeat emulation | Yes | Yes |
+| `PLAY_ACTIVITY` | Activity session heartbeats | Yes | Yes |
+| `STREAM_ON_DESKTOP` | Stream key channel simulation | Yes | Yes |
+| `ACHIEVEMENT_IN_ACTIVITY` | OAuth proxy ticket bridge | Yes | Yes |
+| `ACHIEVEMENT_IN_GAME` | Game-side trigger requirements | Yes | Manual |
+
+---
+
+## Prerequisites
+
+QuestCompleter runs as a user plugin inside an **Equicord** or **Vencord** source build.
+
+| Tool | Recommended Version | Purpose |
+| :--- | :--- | :--- |
+| **Git** | Latest | Cloning mod and plugin repositories |
+| **Node.js** | v20.x or v22.x LTS | JavaScript runtime and compiler environment |
+| **pnpm** | v9+ or v12+ | Dependency management and build scripts |
+| **Equicord / Vencord** | Latest `main` / `dev` branch | Target client mod compiled from source |
+
+---
+
+## Installation
+
+### 1. Clone into `src/userplugins`
+
+Navigate to your local Equicord or Vencord source directory and clone the repository:
+
 ```bash
-curl -sSL https://raw.githubusercontent.com/itskonv1/QuestCompleter/main/install.sh | bash
+git clone https://github.com/itskonv1/QuestCompleter.git src/userplugins/QuestCompleter
 ```
 
-**Windows :**
-```cmd
-powershell -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/itskonv1/QuestCompleter/main/install.ps1 | iex"
+### 2. Build and Inject
+
+Run your project build and injection commands from the root of your Equicord or Vencord directory:
+
+```bash
+pnpm install
+pnpm build
+pnpm inject
 ```
 
-> [!IMPORTANT]
-> Make sure to completely restart Discord (close it from system tray or task manager, then reopen) once the script completes.
+### 3. Enable the Plugin
+
+1. Completely close Discord (from your system tray or task manager) and launch it again.
+2. Open **User Settings** (`Ctrl + ,`).
+3. Under the **Plugins** section, search for **QuestCompleter** and toggle it on.
 
 ---
 
-### Method 2: Manual Installation
+## Configuration
 
-If you already have a Vencord or Equicord repository clone:
+You can customize plugin behavior under **User Settings** -> **Plugins** -> **QuestCompleter**:
 
-1. Clone this repository into your `src/userplugins` directory:
-   ```bash
-   git clone https://github.com/itskonv1/QuestCompleter.git src/userplugins/QuestCompleter
-   ```
-2. Install dependencies, build, and inject:
-   ```bash
-   pnpm install --frozen-lockfile
-   pnpm build
-   pnpm inject
-   ```
-3. Restart Discord completely, open settings, and toggle **QuestCompleter** under the **UserPlugins** section.
+| Setting | Type | Default | Description |
+| :--- | :---: | :---: | :--- |
+| `autoStart` | `BOOLEAN` | `true` | Automatically accepts and enrolls all unenrolled quests upon detection |
+| `showNotifications` | `BOOLEAN` | `true` | Shows toast notifications when quests are enrolled or finished |
+| `completeVideoQuestsQuicker` | `BOOLEAN` | `true` | Uses elapsed time since enrollment to fast-forward video quest requirements |
+| `makeMobileVideoQuestsDesktopCompatible` | `BOOLEAN` | `true` | Adapts mobile-exclusive video quests so they can be processed on desktop |
+| `debugMode` | `BOOLEAN` | `false` | Prints verbose logging and network responses to the DevTools console |
 
 ---
-
-<h2 align="center">
-  <img src="https://img.icons8.com/?size=100&id=YSWCDCSF4H3N&format=png&color=888888" width="22"> Settings Configuration
-</h2>
-
-You can customize the plugin's behavior under Settings → Plugins → UserPlugins:
-
-```text
-Plugin Settings:
-• Auto-Enroll                           : Enabled (Accept quests)
-• Auto-Claim                            : Enabled (Claim rewards)
-• Show Notifications                    : Enabled (Client toasts)
-• Complete Video Quests Quicker         : Enabled (Skip video timers)
-• Make Mobile Video Quests Compatible   : Enabled (Watch mobile quests)
-• Debug Mode                            : Disabled (Log progression)
-```
-
----
-
-<br>
 
 <p align="center">
-  Developed by <b>@kon</b>.
-  <br><br>
-  If you find a bug, have an idea, or want to contribute, feel free to open an issue or submit a pull request.
+  Developed by <b>@kon</b>
 </p>

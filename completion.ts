@@ -6,9 +6,9 @@
 
 import { QuestTaskType } from "@vencord/discord-types/enums";
 import { findByCodeLazy, findLazy } from "@webpack";
-import { FluxDispatcher, QuestStore, RestAPI, showToast, Toasts } from "@webpack/common";
+import { FluxDispatcher, QuestStore, RestAPI, showToast } from "@webpack/common";
 
-import { getQuestProgress,getQuestTarget, getQuestTask } from "./helpers";
+import { getQuestProgress, getQuestTarget, getQuestTask } from "./helpers";
 import { settings } from "./settings";
 
 interface QuestEnrollmentMetadata {
@@ -45,17 +45,18 @@ const sendHeartbeat = findByCodeLazy(".QUESTS_HEARTBEAT(") as (options: {
     executableFingerprint?: unknown;
 }) => Promise<void>;
 
-const getApplicationProxyTicket = findByCodeLazy("APPLICATION_PROXY_TICKET", "body.ticket") as (applicationId: string, channelId?: string) => Promise<string>;
+const getApplicationProxyTicket = findByCodeLazy(".expiresAt>", ".ticket;") as (applicationId: string, channelId?: string) => Promise<string>;
 
 export const enrollInQuest = findByCodeLazy('type:"QUESTS_ENROLL_BEGIN",') as (questId: string, options: QuestEnrollmentMetadata) => Promise<{ type: string; }>;
 
-const QuestCTA = findLazy(m => !!m?.START_QUEST && !!m?.ACCEPT_QUEST) as QuestCTAConstants;
+const QuestCTA = findLazy(m => Boolean(m?.START_QUEST && m?.ACCEPT_QUEST)) as QuestCTAConstants | undefined;
 
-function resolveQuestCTA(taskType?: QuestTaskType): string | undefined {
-    if (!taskType) return undefined;
-    return [QuestTaskType.ACHIEVEMENT_IN_ACTIVITY, QuestTaskType.PLAY_ACTIVITY, QuestTaskType.WATCH_VIDEO].includes(taskType)
-        ? QuestCTA.START_QUEST
-        : QuestCTA.ACCEPT_QUEST;
+function resolveQuestCTA(taskType?: QuestTaskType): string {
+    const isStart = Boolean(taskType && [QuestTaskType.ACHIEVEMENT_IN_ACTIVITY, QuestTaskType.PLAY_ACTIVITY, QuestTaskType.WATCH_VIDEO].includes(taskType));
+    if (QuestCTA) {
+        return isStart ? QuestCTA.START_QUEST : QuestCTA.ACCEPT_QUEST;
+    }
+    return isStart ? "START_QUEST" : "ACCEPT_QUEST";
 }
 
 async function getActivityReferrer(appId: string): Promise<string | undefined> {
@@ -74,13 +75,14 @@ async function getActivityReferrer(appId: string): Promise<string | undefined> {
 }
 
 function makeEnrollmentData(quest: any, taskType?: QuestTaskType): QuestEnrollmentMetadata {
+    const cta = resolveQuestCTA(taskType);
     return {
-        questContent: 1,
-        questContentCTA: resolveQuestCTA(taskType),
-        sourceQuestContent: 1,
-        sourceQuestContentCTA: resolveQuestCTA(taskType),
-        questContentPosition: 1,
-        questContentRowIndex: 1
+        questContent: 11,
+        questContentCTA: cta,
+        sourceQuestContent: 11,
+        sourceQuestContentCTA: cta,
+        questContentPosition: 0,
+        questContentRowIndex: 0
     };
 }
 
@@ -161,24 +163,41 @@ export class QuestRunner {
     public async run(): Promise<void> {
         try {
             const task = getQuestTask(this.quest);
-            if (!task) return;
 
             if (!this.quest.userStatus?.enrolledAt) {
                 if (!settings.store.autoStart) return;
 
                 if (settings.store.showNotifications) {
-                    showToast(`Enrolling in ${this.quest.config.messages.questName}...`, Toasts.Type.MESSAGE);
+                    showToast({ text: `Enrolling in ${this.quest.config.messages.questName}...` });
                 }
 
-                const res = await enrollInQuest(this.questId, makeEnrollmentData(this.quest, task.type));
-                if (this.abortController.signal.aborted) return;
-                if (!res || (res.type !== "success" && (res as any).type !== "previous_in_flight_request")) {
-                    return;
+                try {
+                    const res = await enrollInQuest(this.questId, makeEnrollmentData(this.quest, task?.type));
+                    if (this.abortController.signal.aborted) return;
+                    if (res && res.type !== "success" && (res as any).type !== "previous_in_flight_request") {
+                        if (settings.store.debugMode) {
+                            console.warn("[QuestCompleter] Enrollment response:", res);
+                        }
+                    }
+                } catch (enrollErr) {
+                    if (settings.store.debugMode) {
+                        console.error("[QuestCompleter] Enrollment failed:", enrollErr);
+                    }
                 }
+
+                await new Promise<void>(resolve => FluxDispatcher.wait(resolve));
             }
 
+            const currentQuest = QuestStore.getQuest(this.questId) ?? this.quest;
+            if (!currentQuest.userStatus?.enrolledAt) {
+                return;
+            }
+
+            if (!task) return;
+            if (currentQuest.userStatus?.completedAt) return;
+
             const targets = getQuestTarget(task, settings.store.completeVideoQuestsQuicker);
-            const initialProgress = getQuestProgress(this.quest, task);
+            const initialProgress = getQuestProgress(currentQuest, task);
 
             if (task.type === QuestTaskType.WATCH_VIDEO || task.type === QuestTaskType.WATCH_VIDEO_ON_MOBILE) {
                 await this.runVideoQuest(task, targets, initialProgress);
@@ -190,23 +209,9 @@ export class QuestRunner {
 
             if (this.abortController.signal.aborted) return;
 
-            if (settings.store.showNotifications) {
-                showToast(`Completed: ${this.quest.config.messages.questName}`, Toasts.Type.SUCCESS);
-            }
-
-            if (settings.store.autoClaim) {
-                await sleep(2000, this.abortController.signal);
-                const platforms = this.quest.config?.rewardsConfig?.platforms ?? [];
-                const platform = platforms.includes(4) ? 4 : (platforms[0] ?? 0);
-                await RestAPI.post({
-                    url: `/quests/${this.questId}/claim-reward`,
-                    body: { platform, location: 1 },
-                    signal: this.abortController.signal
-                } as any);
-
-                if (settings.store.showNotifications) {
-                    showToast(`Reward claimed: ${this.quest.config.messages.questName}`, Toasts.Type.SUCCESS);
-                }
+            const finalQuest = QuestStore.getQuest(this.questId) ?? currentQuest;
+            if (finalQuest.userStatus?.completedAt && settings.store.showNotifications) {
+                showToast({ text: `Completed: ${this.quest.config.messages.questName}`, variant: "success" });
             }
         } catch (error: any) {
             if (settings.store.debugMode && !this.abortController.signal.aborted) {
@@ -337,7 +342,7 @@ export class QuestRunner {
     }
 
     private async runAchievementQuest(task: any, target: number): Promise<void> {
-        const appId = task.applications?.[0]?.id;
+        const appId = task.applications?.[0]?.id ?? this.quest.config?.application?.id;
         if (!appId) return;
 
         let authCode: string | null = null;
@@ -417,12 +422,15 @@ export class QuestOrchestrator {
     }
 
     private shouldProcess(quest: any): boolean {
-        if (!quest.config) return false;
+        if (!quest?.config) return false;
         if (quest.userStatus?.completedAt) return false;
-        if (new Date(quest.config.expiresAt).getTime() <= Date.now()) return false;
+        if (quest.config.expiresAt && new Date(quest.config.expiresAt).getTime() <= Date.now()) return false;
+        if (quest.config.startsAt && new Date(quest.config.startsAt).getTime() > Date.now()) return false;
+        if (!quest.userStatus?.enrolledAt) {
+            return settings.store.autoStart;
+        }
         const task = getQuestTask(quest);
         if (!task) return false;
-        if (!quest.userStatus?.enrolledAt && !settings.store.autoStart) return false;
         return true;
     }
 

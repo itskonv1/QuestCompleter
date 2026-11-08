@@ -17,16 +17,16 @@ export interface RGB {
 export const desktopVideoCompatibilityQuestIds = new Set<string>();
 
 const TASK_PRIORITY = [
+    QuestTaskType.WATCH_VIDEO,
+    QuestTaskType.WATCH_VIDEO_ON_MOBILE,
+    QuestTaskType.ACHIEVEMENT_IN_ACTIVITY,
+    QuestTaskType.PLAY_ACTIVITY,
     QuestTaskType.PLAY_ON_DESKTOP,
     QuestTaskType.PLAY_ON_DESKTOP_V2,
     QuestTaskType.PLAY_ON_XBOX,
     QuestTaskType.PLAY_ON_PLAYSTATION,
-    QuestTaskType.PLAY_ACTIVITY,
-    QuestTaskType.WATCH_VIDEO,
-    QuestTaskType.WATCH_VIDEO_ON_MOBILE,
-    QuestTaskType.ACHIEVEMENT_IN_GAME,
-    QuestTaskType.ACHIEVEMENT_IN_ACTIVITY,
     QuestTaskType.STREAM_ON_DESKTOP,
+    QuestTaskType.ACHIEVEMENT_IN_GAME,
 ] as const;
 
 export const VIDEO_LEEWAY = 24;
@@ -44,6 +44,16 @@ export function getQuestTask(quest: any): { type: QuestTaskType; target: number;
             };
         }
     }
+
+    const allTasks = Object.values(tasks) as any[];
+    if (allTasks.length > 0 && allTasks[0]?.type) {
+        return {
+            type: allTasks[0].type,
+            target: allTasks[0].target ?? 1,
+            applications: allTasks[0].applications
+        };
+    }
+
     return null;
 }
 

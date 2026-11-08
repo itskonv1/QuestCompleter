@@ -86,12 +86,19 @@ async function progress(appId: string, token: string, questTarget: number, quest
 
     const success = await fetch(`https://${appId}.discordsays.com/.proxy/acf/quest/progress`, {
         headers: getActivityHeaders(questId, token, activityReferrer),
-        body: JSON.stringify({ progress: questTarget }),
+        body: JSON.stringify({ progress: questTarget, quest_id: questId }),
         method: "POST",
         mode: "cors",
         credentials: "include",
     })
-        .then(res => res.ok)
+        .then(async res => {
+            const data = await readJson(res);
+            if (res.ok && data != null && typeof data === "object" && "status" in data && (data as any).status === "ok") {
+                return true;
+            }
+            error = { status: res.status, body: data };
+            return false;
+        })
         .catch(e => {
             error = e;
             return false;
